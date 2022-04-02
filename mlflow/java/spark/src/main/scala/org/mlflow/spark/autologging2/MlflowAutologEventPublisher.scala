@@ -43,7 +43,7 @@ private[autologging2] trait MlflowAutologEventPublisherImpl {
       "autologging."))
   }
 
-  println(f"Custom MlflowAutologEventPublisherImpl autologging2 v2: ${this}.  subscribers: ${subscribers}")
+  println(f"Custom MlflowAutologEventPublisherImpl autologging2 v6: ${this}.  subscribers: ${subscribers}")
 
   /**
    * @returns True if Spark is running in a REPL-aware context. False otherwise.
@@ -73,8 +73,10 @@ private[autologging2] trait MlflowAutologEventPublisherImpl {
   // Exposed for testing
   private[autologging2] def getSparkDataSourceListener: SparkListener = {
     if (isInReplAwareContext) {
+      println(f"isInReplAwareContext, return ReplAwareSparkDataSourceListener")
       new ReplAwareSparkDataSourceListener(this)
     } else {
+      println(f"not isInReplAwareContext, return SparkDataSourceListener")
       new SparkDataSourceListener(this)
     }
   }
@@ -82,7 +84,7 @@ private[autologging2] trait MlflowAutologEventPublisherImpl {
   // Initialize Spark listener that pulls Delta query plan information & bubbles it up to registered
   // Python subscribers, along with a GC loop for removing unrespoins
   def init(gcDeadSubscribersIntervalSec: Int = 1): Unit = synchronized {
-    println("Custom MlflowAutologEventPublisherImpl init autologging2 v2")
+    println("Custom MlflowAutologEventPublisherImpl init autologging2 v5")
     if (sparkQueryListener == null) {
       val listener = getSparkDataSourceListener
       // NB: We take care to set the variable only after adding the Spark listener succeeds,

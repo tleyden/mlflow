@@ -26,9 +26,17 @@ class ReplAwareSparkDataSourceListener(
   }
 
   override def onJobStart(event: SparkListenerJobStart): Unit = {
+    println(f"ReplAwareSparkDataSourceListener onJobStart called")
     val properties = getProperties(event)
+    // too much output println(f"event properties: ${properties}. SparkListenerJobStart event: ${event}")
     val executionIdOpt = properties.get(SQLExecution.EXECUTION_ID_KEY).map(_.toLong)
+    println(f"executionIdOpt: ${executionIdOpt}")
     if (executionIdOpt.isEmpty) {
+      try {
+        println(f"warning, executionIdOpt is empty for event (first 10k chars) ${event.toString.take(10000)}")
+      } catch {
+        case e: _ => println("Got exception printing event.")
+      }
       logger.warn(s"Unable to find execution ID of current Spark Job, " +
         s"refusing to autolog datasource reads performed within current Spark job")
       return
@@ -36,15 +44,18 @@ class ReplAwareSparkDataSourceListener(
     val executionId = executionIdOpt.get
     val replIdOpt = properties.get("spark.databricks.replId")
     if (replIdOpt.isEmpty) {
+      println(f"replIdOpt: ${replIdOpt} is empty, not putting in ${executionIdToReplId}")
       logger.warn(s"Unable to find ID of REPL that triggered current Spark Job (execution ID " +
         s"$executionId), " +
         s"refusing to autolog datasource reads performed within current Spark job")
       return
     }
+    println(f"put replIdOpt: ${replIdOpt} for executionIdOpt ${executionIdOpt}")
     executionIdToReplId.put(executionId, replIdOpt.get)
   }
 
   override protected def getReplIdOpt(event: SparkListenerSQLExecutionEnd): Option[String] = {
+    println(f"remove event.executionId: ${event.executionId} from executionIdToReplId map")
     executionIdToReplId.remove(event.executionId)
   }
 }

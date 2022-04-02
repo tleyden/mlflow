@@ -17,14 +17,21 @@ class SparkDataSourceListener(
     DatasourceAttributeExtractor
   }
 
-  protected def getReplIdOpt(event: SparkListenerSQLExecutionEnd): Option[String] = None
+  protected def getReplIdOpt(event: SparkListenerSQLExecutionEnd): Option[String] = {
+    println(f"SparkDataSourceListener.getReplIdOpt returning None")
+    None
+  }
 
   // Exposed for testing
   private[autologging2] def onSQLExecutionEnd(event: SparkListenerSQLExecutionEnd): Unit = {
+    println(f"SparkDataSourceListener.onSQLExecutionEnd called with event: ${event}")
+    val replIdOpt = getReplIdOpt(event)  // Workaround attempt - if there are multiple tableInfos, then this will cause issues since getReplIdOpt removes it from the map
+    println(f"SparkDataSourceListener.getReplIdOpt: ${replIdOpt} for event: ${event}")
     val extractor = getDatasourceAttributeExtractor
     val tableInfos = extractor.getTableInfos(event)
     tableInfos.foreach { tableInfo =>
-      publisher.publishEvent(getReplIdOpt(event), tableInfo)
+      println(f"SparkDataSourceListener.publishEvent replIdOpt: ${replIdOpt} tableInfo: ${tableInfo}")
+      publisher.publishEvent(replIdOpt, tableInfo)
     }
   }
 
